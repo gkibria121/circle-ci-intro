@@ -67,7 +67,3 @@ workflows:
       - deploy:
           requires:
             - build
-          filters:
-            branches:
-              only:
-                - main # Ensure this workflow only runs on the main branch
