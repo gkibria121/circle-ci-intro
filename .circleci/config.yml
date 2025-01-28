@@ -56,9 +56,7 @@ jobs:
       - run:
           name: Deploy application
           command: |
-            ssh $SSH_USER@$SSH_HOST "
-              echo 'hello, world!'
-            "
+            ssh $SSH_USER@$SSH_HOST "echo 'hello, world!' >> test.txt"
 
 workflows:
   build-and-deploy:
