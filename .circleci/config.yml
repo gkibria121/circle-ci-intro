@@ -1,0 +1,67 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+version: 2.1
+
+orbs:
+  node: circleci/node@5 # Use the official Node.js orb for convenience
+
+jobs:
+  build:
+    docker:
+      - image: cimg/node:lts # Use the LTS version of Node.js for building Next.js
+    steps:
+      # Step 1: Checkout the code
+      - checkout
+
+      # Step 2: Install Node.js dependencies
+      - node/install-packages:
+          pkg-manager: npm
+
+      # Step 3: Build the Next.js application
+      - run:
+          name: Build Next.js application
+          command: npm run build
+
+      # Step 4: Save build artifacts for deployment
+      - run:
+          name: Prepare deployment artifacts
+          command: |
+            mkdir -p ~/artifacts
+            cp -R .next ~/artifacts/next
+
+      # Step 5: Store artifacts in CircleCI
+      - store_artifacts:
+          path: ~/artifacts
+          destination: build-output
+
+  deploy:
+    docker:
+      - image: cimg/base:stable # Base image for deployment
+    steps:
+      # Step 1: Checkout the code
+      - checkout
+
+      # Step 2: Add SSH keys (configured in CircleCI project settings)
+      - add_ssh_keys:
+          fingerprints:
+            - "$SSH_FINGERPRINT" # Replace with your actual SSH fingerprint
+
+      # Step 3: Add SSH host key to known_hosts
+      - run:
+          name: Add SSH Host Key
+          command: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+      # Step 4: Deploy to the server
+      - run:
+          name: Deploy application
+          command: |
+            ssh $SSH_USER@$SSH_HOST "echo 'hello, world!' >> test.txt"
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
